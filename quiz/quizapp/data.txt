@@ -1,0 +1,23 @@
+user_quizzes = Quiz.objects.filter(created_by=request.user)
+        quiz_count = user_quizzes.count()
+        total_attempts = Answers.objects.filter(quiz__in=user_quizzes).count()
+        tp_instance = TotalParticipants.objects.filter(user=request.user).first()
+        if tp_instance and tp_instance.total_participants is not None:
+            total_attempts = tp_instance.total_participants
+            chart_labels = []
+            chart_scores = []
+        for quiz in user_quizzes:
+             total_average = 0
+             quizzes = Quiz.objects.filter(created_by=request.user)
+             quizzes_created_by_user = quizzes.count()
+             for quiz in quizzes:
+                 total_attempts = len(Attempt.objects.filter(quiz = quiz))
+                 total_answer = len(Answers.objects.filter(quiz = quiz,score = 1))
+                 total_questions = quiz.totalquestions
+                 Average = total_answer/max((total_attempts*total_questions),1)
+                 total_average += Average
+                 Average = total_average/len(quizzes)
+                 chart_labels.append(quiz.quiztitle)
+                 chart_scores.append(Average)
+        overall_avg = Answers.objects.filter(quiz__in=user_quizzes).aggregate(avg=Avg('score'))['avg']
+        overall_avg_score = round(overall_avg * 100, 2) if overall_avg is not None else 0
